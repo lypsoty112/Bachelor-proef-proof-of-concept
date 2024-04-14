@@ -2,16 +2,14 @@ import dotenv
 from typing import Tuple
 from pymongo import MongoClient
 import os
+import logging
 
 
-def startup() -> Tuple[
-    MongoClient,
-]:
+def startup() -> Tuple[MongoClient,]:
     dotenv.load_dotenv()
 
-    client = MongoClient(
-        os.getenv("MONGODB_URI")
-    )
+    logging.basicConfig(level=logging.INFO)
+
+    client = MongoClient(os.getenv("MONGODB_URI"))
 
     return (client,)
-
