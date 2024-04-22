@@ -14,6 +14,13 @@ class OpenAILLM(BaseLLM):
         return OpenAI(**self.model_parameters) if not self.chat else ChatOpenAI(**self.model_parameters)
 
     def post_run(self, data: object) -> LlmOutput:
-        return LlmOutput(
-            completion=str(data),
-        )
+        return LlmOutput(completion=str(data), )
+
+
+class OutputFixerOpenAILlm(OpenAILLM):
+    def __init__(self, chat: bool = False, model_parameters: dict = None) -> None:
+        if model_parameters is None:
+            model_parameters = {}
+        model_parameters["temperature"] = 0.0
+        super().__init__(chat, model_parameters)
+        self.llm_name = "openai"

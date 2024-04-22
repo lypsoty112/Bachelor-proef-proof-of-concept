@@ -16,12 +16,7 @@ class RecursiveCharacterTextSplitterComponent(BaseComponent):
         if splitter_params is None:
             splitter_params = {}
 
-        default_params = {
-            "separators": ["\n", ".", "!", "?"],
-            "keep_separator": True,
-            "chunk_size": 512,
-            "length_function": self._length_function,
-        }
+        default_params = {"separators": ["\n", ".", "!", "?"], "keep_separator": True, "chunk_size": 1024, "length_function": self._length_function, }
 
         for key, value in default_params.items():
             if key not in splitter_params:
@@ -31,23 +26,22 @@ class RecursiveCharacterTextSplitterComponent(BaseComponent):
 
     def build(self) -> object | None:
         self.enc = tiktoken.get_encoding("cl100k_base")
-        self.splitter = RecursiveCharacterTextSplitter(
-            **self._params
-        )
+        self.splitter = RecursiveCharacterTextSplitter(**self._params)
         return None
 
     def run(self, data: str | Document | List[str | Document]) -> list[Document]:
         if not isinstance(data, list):
             data = [data]
 
+        texts = []
+
         for i, item in enumerate(data):
             if not isinstance(item, Document):
-                data[i] = Document(
-                    page_content=item,
-                    metadata={},
-                )
+                texts.append(item)
+            else:
+                texts.append(item.page_content)
 
-        return self.splitter.split_documents(data)
+        return [Document(page_content=x) for x in self.splitter.split_text("\n".join(texts))]
 
     def post_run(self, data: object) -> object:
         return data

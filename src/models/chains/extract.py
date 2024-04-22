@@ -2,12 +2,10 @@ from pydantic import BaseModel, Field
 
 
 class ExtractOutput(BaseModel):
-    value: str | None = Field(None,
-                              description="The extracted information from the text. If no information was "
-                                          "found, this field should be None.")
-    request: str | None = Field(None,
-                                description="Questions or prompts for more information if necessary. If no extra "
-                                            "information is needed, this field should be None.")
+    value: str | None = Field(None, description="The extracted information from the text. If no information was "
+                                                "found, this field should be None.")
+    request: str | None = Field(None, description="Questions or prompts for more information if necessary. If no extra "
+                                                  "information is needed, this field should be None.")
 
 
 class ExtractInput(BaseModel):

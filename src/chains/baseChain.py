@@ -2,6 +2,7 @@ from langchain_core.runnables import Runnable
 
 from src.components.llm.baseLLM import BaseLLM
 from src.components.base.baseComponent import BaseComponent
+from loguru import logger
 
 
 class BaseChain(BaseComponent):
@@ -12,6 +13,8 @@ class BaseChain(BaseComponent):
         self.prompt: str = ""  # The prompt that the chain uses to generate completions
         self._llm: BaseLLM | None = None  # The LLM that the chain uses
         self._chain: Runnable | None = None  # The chain that the chain uses. This is created in the build method
+        self._logger = logger
+
 
     def build(self) -> None:
         """

@@ -1,8 +1,8 @@
-from typing import List
+from typing import List, Type
 
 from fastapi import UploadFile
 from langchain_core.documents import Document
-from langchain_community.document_loaders import UnstructuredPDFLoader
+from langchain_community.document_loaders import PyMuPDFLoader
 import tempfile
 
 from src.components.base.baseComponent import BaseComponent
@@ -11,7 +11,7 @@ from src.components.base.baseComponent import BaseComponent
 class PdfProcessor(BaseComponent):
     def __init__(self):
         super().__init__()
-        self.loader: UnstructuredPDFLoader = UnstructuredPDFLoader
+        self.loader: Type[PyMuPDFLoader] = PyMuPDFLoader
 
     def build(self) -> object | None:
         return None
