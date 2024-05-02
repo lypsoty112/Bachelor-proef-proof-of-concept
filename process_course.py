@@ -46,7 +46,6 @@ if st.button("Process course") and file:
     converted_results = []
     db_to_write = {}
     for plan, document in zip(results.plan, results.chunks):
-        print(plan, document.page_content, document.metadata)
         converted_results.append({"learning goals": plan, "chunk": {"page_content": document.page_content, "metadata": document.metadata}})
         # Add an ID
         db_to_write["results"] = converted_results

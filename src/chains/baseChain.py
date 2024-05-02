@@ -15,7 +15,6 @@ class BaseChain(BaseComponent):
         self._chain: Runnable | None = None  # The chain that the chain uses. This is created in the build method
         self._logger = logger
 
-
     def build(self) -> None:
         """
         Builds the chain internally. This method should be called before running the chain.

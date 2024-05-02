@@ -1,0 +1,16 @@
+version: '3'
+
+vars:
+  PYTHON: ./.venv/Scripts/python
+
+tasks:
+  learning preferences:
+    cmds:
+      - |
+        {{.PYTHON}} -m streamlit run learning_preferences.py --server.headless True
+  
+  learner: 
+    desc: Run the summarization app
+    cmds:
+      - |
+        {{.PYTHON}} -m streamlit run learner.py --server.headless True
