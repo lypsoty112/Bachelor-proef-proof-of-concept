@@ -69,30 +69,41 @@ class TeacherChain(BaseChain):
                 # If there's one, get the next inner chunk
                 self._inner_chunk_index += 1
                 generated_content = self._contentGenerator.run({
-                    "course_content": self._inner_contents[self._inner_chunk_index], "employee_needs": self._user_preferences,
+                    "course_content": self._inner_contents[self._inner_chunk_index], "employee_needs": self._user_preferences, "previous_interaction": data.messages,
                 })
-                return ChatOutput(response=Message(role="ai", content=generated_content), metadata={"type": "content"})
-            else:
-                # Return a question
-                questions = self._course[self._chunk_index]["questions"]
-                questions = questions[len(questions) // 2:]
 
-                return ChatOutput(response=Message(role="ai", content=json.dumps(questions)), metadata={"type": "questions"})
+
+                return ChatOutput(response=Message(role="ai", content=generated_content), metadata=self.generate_metadata("content"))
+            else:
+                # Update the inner contents
+                self._chunk_index += 1
+                self.update_inner_contents()
+                self._inner_chunk_index = 0
+                generated_content = self._contentGenerator.run({
+                    "course_content": self._inner_contents[self._inner_chunk_index], "employee_needs": self._user_preferences, "previous_interaction": data.messages,
+                })
+
+                return ChatOutput(response=Message(role="ai", content=generated_content), metadata=self.generate_metadata("content"))
 
         elif classification.next_step == NextStep.ASK_FOR_MORE_INFORMATION:
             # Ask for more information
             return self._chatChain.run({
-                "messages": data.messages.extend([Message(role="system", content="There's not enough information to answer the user's question. Ask for more information.")]), "metadata": data.metadata
+                "messages": data.messages.extend([Message(role="system", content="There's not enough information to answer the user's question. Ask for more information.")]),
+                "metadata": self.generate_metadata("content", data.metadata)
             })
 
         elif classification.next_step == NextStep.RESPOND_TO_QUESTION:
             # Respond to the question
             inner_chunk = self._inner_contents[self._inner_chunk_index]
 
-            message = f"Here's the content of the course the user is asking about: ```{inner_chunk}```"
+            copied_messages = data.messages.copy()
+
+            metadata = {
+                **data.metadata, "course_material": inner_chunk,
+            }
 
             return self._chatChain.run({
-                "messages": data.messages.extend([Message(role="system", content=message)]), "metadata": data.metadata
+                "messages": copied_messages, "metadata": metadata,
             })
 
     def update_inner_contents(self) -> None:
@@ -102,6 +113,20 @@ class TeacherChain(BaseChain):
         chunk = self._course[chunk_idx]
 
         self._inner_contents = self._text_splitter.split_text(chunk["chunk"]["page_content"])
+
+    def generate_metadata(self, message_type: str, existing_metadata: Dict[str, Any] | None = None, **args) -> Dict[str, Any]:
+        if existing_metadata is None:
+            metadata = {}
+        else:
+            metadata = existing_metadata.copy()
+        metadata["type"] = message_type
+        metadata["chunk_index"] = self._chunk_index
+        metadata["inner_chunk_index"] = self._inner_chunk_index
+        metadata["employee_needs"] = self._user_preferences
+        metadata["course_content"] = self._inner_contents[self._inner_chunk_index]
+        return {
+            **metadata, **args,
+        }
 
     def pre_run(self, data: ChatInput) -> dict:
         pass

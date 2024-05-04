@@ -1,9 +1,10 @@
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from src.chains.baseChain import BaseChain
 from src.components.llm.openai import OpenAILLM
 from src.models.chains.chat import ChatInput, ChatOutput
+from src.models.main import Message
 
 PROMPT = """
 You're a chatbot tasked with answering questions from users about a HR-course. To help you, you're given the part of the course that covers the topic the user is asking about. \
@@ -37,7 +38,7 @@ class ChatChain(BaseChain):
 
     def run(self, data: ChatInput | dict) -> ChatOutput:
         pre = self.pre_run(data)
-        result = self._chain.run(pre)
+        result = self._chain.invoke(pre)
         return self.post_run(result)
 
     def pre_run(self, data: ChatInput | dict) -> dict:
@@ -50,9 +51,21 @@ class ChatChain(BaseChain):
             raise ValueError("Course material is missing from the metadata.")
 
         # Sort the messages by timestamp, where the first message is the oldest
-        messages = sorted(data.messages, key=lambda x: x.timestamp)
+        messages = sorted(data.messages, key=lambda x: x.timestamp)[-10:]
+        messages = [handle_message(message) for message in messages]
 
         return {"course_material": course_material, "chat_history": messages[-10:]}
 
-    def post_run(self, data: dict) -> ChatOutput:
-        return ChatOutput(response=data["response"], metadata=data["metadata"])
+    def post_run(self, data: AIMessage) -> ChatOutput:
+        return ChatOutput(response=Message(role="ai", content=data.content), metadata=data.response_metadata)
+
+
+def handle_message(data: Message) -> BaseMessage:
+    if data.role == "ai":
+        return AIMessage(content=data.content)
+    elif data.role == "user":
+        return HumanMessage(content=data.content)
+    elif data.role == "system":
+        return SystemMessage(content=data.content)
+    else:
+        return BaseMessage(content=data.content, role=data.role)
