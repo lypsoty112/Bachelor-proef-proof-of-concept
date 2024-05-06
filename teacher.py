@@ -57,7 +57,10 @@ if st.sidebar.button("Select"):
 
 # Only show chat input if course and user are selected
 if "teacherChain" in st.session_state:
-    if prompt := st.chat_input("What is up?"):
+    # Add a note
+
+    prompt = st.chat_input("Ask a question or tell the assistant to continue.")
+    if prompt:
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
         # Display user message in chat message container

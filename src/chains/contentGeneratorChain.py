@@ -1,18 +1,17 @@
 from langchain_core.prompts import PromptTemplate
 
 from src.chains.baseChain import BaseChain
+from src.chains.simpleTextTaskChain import SimpleTextTaskChain
 from src.components.llm.openai import OpenAILLM
 from src.models.chains.contentGenerator import ContentGeneratorInput
 
 PROMPT = """
-You're an AI tasked with teaching a HR-course to employees. You're given a piece of the course's content and the learning style of the employee. \
-With this information equipped, write a text that is tailored to the employee's learning style and covers the course content. The text should be engaging and informative. \
-Your text has to be formatted in markdown. Make sure to ask the employee if they have any questions at the end of the text.
-Remember:
-- You HAVE to use markdown to format your text.
-- The provided course content is part of a larger course.
-- There's no need to introduce yourself or the course content. Jump right into the content.
-**Course Content:**
+You're a teacher tasked with providing a HR-course to employees. To do this, you're given a piece of the course called `course chunk`, which is part of the overall course. \
+Provide a Markdown formatted text that explains this chunk to employees with the goal of learning the course content. \
+Make sure to use Markdown syntax to make the text as readable as possible. \
+
+
+**Course Chunk:**
 ```
 {course_content}
 ```
@@ -31,9 +30,11 @@ class ContentGeneratorChain(BaseChain):
         self.llm_name: str = self._llm.llm_name
         self.chain_name: str = "contentGenerator Chain"
         self.prompt = PROMPT
+        self._simpleTextTaskChain = SimpleTextTaskChain()
 
     def build(self) -> None:
         super().build()
+        self._simpleTextTaskChain.build()
         built_llm = self._llm.build()
         promptTemplate = PromptTemplate(template=self.prompt, input_types={"course_content": "str", "employee_needs": "dict", "previous_interaction": "list"},
                                         input_variables=["course_content", "employee_needs", "previous_interaction"])
@@ -43,7 +44,10 @@ class ContentGeneratorChain(BaseChain):
     def run(self, data: ContentGeneratorInput | dict) -> str:
         pre = self.pre_run(data)
         result = self._chain.invoke(pre)
-        return self.post_run(result)
+        result = self._simpleTextTaskChain.run({
+            "text": result, "task": "Edit this text: Use markdown to highlight key points, sentences, and phrases."
+        }).output
+        return self.post_run({"content": result})
 
     def pre_run(self, data: ContentGeneratorInput | dict) -> dict:
         # Convert the data to the correct format
@@ -60,4 +64,4 @@ class ContentGeneratorChain(BaseChain):
         return {"course_content": data.course_content, "employee_needs": data.employee_needs, "previous_interaction": previous_interaction}
 
     def post_run(self, data: dict) -> str:
-        return str(data)
+        return data["content"]

@@ -9,35 +9,26 @@ from src.components.llm.openai import OpenAILLM
 from src.models.chains.testCorrector import TestCorrectorChainInput, TestCorrectorChainOutput
 
 PROMPT = """
-You're an AI tasked with grading a student's answer on a question. To do this, you're given the following information:
-- The question 
-- The student's answer
-- The expected answer
+As an AI, you are tasked with evaluating a student's response to a question. You will be provided with the question, the student's answer, and the expected answer. Your task is to assign a grade from 0 to 100 and provide reasoning for the grade you assign. The output should be formatted as follows:
 
-You're tasked with grading the answer by following this format:
-- Grade: Number grade from 0 to 100
-- Comment: A comment on the student's answer, formatted as if you're talking directly to the student
-- Suggestions: A list of suggestions to improve the student's answer
+- Grade: A numerical grade between 0 and 100
+- Reasoning: A detailed explanation for the grade assigned
 
-*Input*
-*Question:*
-```{question}```
+Here's the format for the input and output:
 
-*Student's answer:*
-```{student_answer}```
+**Input:**
+- Question: ```{question}```
+- Student's Answer: ```{student_answer}```
+- Expected Answer: ```{expected_answer}```
 
-*Expected answer:*
-```{expected_answer}```
-
-Abide to the following formatting guidelines:
-{format_instructions}
+Please adhere to the following formatting guidelines:
+```{format_instructions}```
 """.strip()
 
 
 class Correction(BaseModel):
     grade: int = Field(..., description="Number grade from 0 to 100, where 0 is the worst and 100 is the best.")
-    comment: str = Field(..., description="A comment on the student's answer, formatted as if you're talking directly to the student.")
-    suggestions: list[str] = Field(..., description="A list of suggestions to improve the student's answer.")
+    reasoning: str = Field(...)
 
 
 class TestCorrectorChain(BaseChain):
@@ -63,7 +54,7 @@ class TestCorrectorChain(BaseChain):
 
     def run(self, data: dict | TestCorrectorChainInput) -> TestCorrectorChainOutput:
         pre = self.pre_run(data)
-        result = self._chain.run(pre)
+        result = self._chain.invoke(pre)
         return self.post_run(result)
 
     def pre_run(self, data: dict | TestCorrectorChainInput) -> dict:
@@ -73,4 +64,5 @@ class TestCorrectorChain(BaseChain):
         return {"question": data.question, "student_answer": data.student_answer, "expected_answer": data.expected_answer}
 
     def post_run(self, data: dict) -> TestCorrectorChainOutput:
-        return TestCorrectorChainOutput(grade=data["grade"], comment=data["comment"], suggestions=data["suggestions"])
+        print(data["text"])
+        return TestCorrectorChainOutput(grade=data["text"].grade, reasoning=data["text"].reasoning)

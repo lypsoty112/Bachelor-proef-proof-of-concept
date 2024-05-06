@@ -37,7 +37,6 @@ if file := st.file_uploader("Upload the course here", type=["pdf"], accept_multi
 name = st.text_input("Enter the name of the course")
 
 if st.button("Process course") and file:
-    # TODO: Process the course data
     if not name:
         st.toast("Please enter the name of the course")
         st.stop()

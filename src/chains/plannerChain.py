@@ -11,8 +11,10 @@ from src.components.splitter.RecursiveTextSplitter import RecursiveCharacterText
 from src.models.chains.planner import PlannerOutput, PlannerInput
 
 PROMPT = """Given the following text, your task is to extract and formulate learning goals for a student. Each learning goal should be phrased in the format: `The student can ...`. You may derive 
-multiple learning goals from the provided text. Make sure your learning goals are specific, measurable, achievable, relevant, and time-bound (SMART). Respond with a bullet-point list of learning goals.
-Make sure to answer in English, regardless of the language of the input text.
+multiple learning goals from the provided text. Respond with a bullet-point list of learning goals. Make sure to answer in English, regardless of the language of the input text.
+
+Make sure that the learning goals are based on the content of the text. If there are no learning goals that can be derived from the text, \
+please respond with `No learning goals can be derived from the text.`
 
 Here's an example of how the learning goals should be phrased: 
 - The student can ...
@@ -63,8 +65,7 @@ class PlannerChain(BaseChain):
     def pre_run(self, data: PlannerInput) -> List[Document]:
         file = data.file
 
-        processed = self.components["processor"].run(data=file)
-        return self.components["splitter"].run(data=processed)
+        return self.components["processor"].run(data=file)
 
     def post_run(self, data: dict) -> PlannerOutput:
         return PlannerOutput(plan=data["plan"], chunks=[{"page_content": chunk.page_content, "metadata": chunk.metadata} for chunk in data["chunks"]], )

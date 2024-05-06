@@ -9,5 +9,4 @@ class TestCorrectorChainInput(BaseModel):
 
 class TestCorrectorChainOutput(BaseModel):
     grade: int = Field(..., description="Number grade from 0 to 100, where 0 is the worst and 100 is the best.")
-    comment: str = Field(..., description="A comment on the student's answer, formatted as if you're talking directly to the student.")
-    suggestions: list[str] = Field(..., description="A list of suggestions to improve the student's answer.")
+    reasoning: str = Field(..., description="A comment on the student's answer, formatted as if you're talking directly to the student.")

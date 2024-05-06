@@ -30,9 +30,12 @@ if st.button("Generate the tests"):
     updated_course_info = []
     for i, chunk in enumerate(course_info['results']):
         pct_done = int((i + 1) / amnt_chunks * 100)
-        questions = test_creator.run(TestCreatorInput(course=chunk["chunk"]["page_content"], learning_goals=chunk['learning goals']))
-        # Overwrite the course information with the new test questions
-        updated_course_info.append({**chunk, **questions.model_dump()})
+        try:
+            questions = test_creator.run(TestCreatorInput(course=chunk["chunk"]["page_content"], learning_goals=chunk['learning goals']))
+            updated_course_info.append({**chunk, **questions.model_dump()})
+        except Exception as e:
+            updated_course_info.append({**chunk, "questions": []})
+            st.error(f"An error occurred while generating the tests: {e}")
         progress_bar.progress(pct_done)
 
     # Update the course information in the database

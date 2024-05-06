@@ -71,8 +71,6 @@ class TeacherChain(BaseChain):
                 generated_content = self._contentGenerator.run({
                     "course_content": self._inner_contents[self._inner_chunk_index], "employee_needs": self._user_preferences, "previous_interaction": data.messages,
                 })
-
-
                 return ChatOutput(response=Message(role="ai", content=generated_content), metadata=self.generate_metadata("content"))
             else:
                 # Update the inner contents

@@ -23,7 +23,7 @@ Task: "{task}"
 class SimpleTextTaskChain(BaseChain):
     def __init__(self):
         super().__init__()
-        self._llm = OpenAILLM()
+        self._llm = OpenAILLM(model_parameters={"temperature": 0.1, "max_tokens": 2000})
         self.llm_name = self._llm.llm_name
         self.chain_name = "simple text task"
         self.prompt = PROMPT

@@ -13,10 +13,11 @@ PROMPT = """
 Your task is to generate a set of questions and answers based on a given portion of a Human Resources (HR) course and its associated learning goals. \
 These questions will be used to assess the students' understanding of the course material. Please adhere to the following guidelines:
 
-- Generate between {min_questions} to {max_questions} questions.
 - Not all learning goals need to be addressed, but ensure that the most critical ones are covered.
 - Each question should be followed by its corresponding answer.
+- If no questions can be generated for the content, provide an empty list.
 - The questions should be designed in a way that they effectively test the students' comprehension of the learning goals.
+- Make sure the questions are clear, concise, and relevant to the course content.
 
 Here is the format you should follow:
 
@@ -26,6 +27,7 @@ Here is the format you should follow:
 **Learning Goals:**
 ````{learning_goals}```
 Now, based on the provided course content and learning goals, please generate the questions and answers.
+
 Follow the requested formatting guidelines.
 {format_instructions}
 
@@ -39,13 +41,13 @@ class Question(BaseModel):
 
 
 class Questions(BaseModel):
-    questions: List[Question] = Field(description="A list of questions and answers")
+    questions: List[Question] = Field(description="A list of questions and answers. Can be empty if no questions are generated.")
 
 
 class TestCreatorChain(BaseChain):
     def __init__(self):
         super().__init__()
-        self._llm = OpenAILLM()
+        self._llm = OpenAILLM(model_parameters={"temperature": .8})
         self._output_llm = OutputFixerOpenAILlm()
         self.llm_name: str = self._llm.llm_name
         self.chain_name: str = "Test Creator Chain"
@@ -59,9 +61,8 @@ class TestCreatorChain(BaseChain):
         parser = OutputFixingParser.from_llm(llm=output_llm, parser=parser, max_retries=5)
         format_instructions = parser.get_format_instructions()
 
-        template = PromptTemplate(input_types={"course": "str", "learning_goals": "str", "format_instructions": "str", "min_questions": "int", "max_questions": "int"},
-                                  input_variables=["course", "learning_goals"], output_parser=parser, template=self.prompt,
-                                  partial_variables={"format_instructions": format_instructions, "min_questions": 1, "max_questions": 7}, )
+        template = PromptTemplate(input_types={"course": "str", "learning_goals": "str", "format_instructions": "str"}, input_variables=["course", "learning_goals"], output_parser=parser,
+                                  template=self.prompt, partial_variables={"format_instructions": format_instructions}, )
 
         self._chain = template | built_llm | parser
 
